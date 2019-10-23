@@ -76,6 +76,7 @@ defmodule Serum.Plugin do
 
   use Agent
   import Serum.IOProxy, only: [put_err: 2, put_msg: 2]
+  alias Serum.Asset
   alias Serum.File
   alias Serum.Fragment
   alias Serum.Page
@@ -101,13 +102,16 @@ defmodule Serum.Plugin do
     reading_pages: 1,
     reading_posts: 1,
     reading_templates: 1,
+    processing_asset: 1,
     processing_page: 1,
     processing_post: 1,
     processing_template: 1,
+    processed_asset: 1,
     processed_page: 1,
     processed_post: 1,
     processed_template: 1,
     processed_list: 1,
+    processed_assets: 1,
     processed_pages: 1,
     processed_posts: 1,
     rendering_fragment: 2,
@@ -220,6 +224,13 @@ defmodule Serum.Plugin do
 
   Plugins can alter the raw contents of input files here.
   """
+  @callback processing_asset(file :: File.t()) :: Result.t(File.t())
+
+  @doc """
+  Called before Serum processes each input file.
+
+  Plugins can alter the raw contents of input files here.
+  """
   @callback processing_page(file :: File.t()) :: Result.t(File.t())
 
   @doc """
@@ -235,6 +246,14 @@ defmodule Serum.Plugin do
   Plugins can alter the raw contents of input files here.
   """
   @callback processing_template(file :: File.t()) :: Result.t(File.t())
+
+  @doc """
+  Called after Serum has processed each input file and produced
+  the resulting struct.
+
+  Plugins can alter the processed contents and metadata here.
+  """
+  @callback processed_asset(asset :: Asset.t()) :: Result.t(Asset.t())
 
   @doc """
   Called after Serum has processed each input file and produced
@@ -267,6 +286,9 @@ defmodule Serum.Plugin do
   Plugins can alter the processed contents and metadata here.
   """
   @callback processed_list(list :: PostList.t()) :: Result.t(PostList.t())
+
+  @doc "Called after Serum has successfully processed all assets."
+  @callback processed_assets(assets :: [Asset.t()]) :: Result.t([Asset.t()])
 
   @doc "Called after Serum has successfully processed all pages."
   @callback processed_pages(pages :: [Page.t()]) :: Result.t([Page.t()])
@@ -487,6 +509,12 @@ defmodule Serum.Plugin do
   end
 
   @doc false
+  @spec processing_asset(file :: File.t()) :: Result.t(File.t())
+  def processing_asset(file) do
+    call_function(:processing_asset, [file])
+  end
+
+  @doc false
   @spec processing_page(file :: File.t()) :: Result.t(File.t())
   def processing_page(file) do
     call_function(:processing_page, [file])
@@ -517,6 +545,12 @@ defmodule Serum.Plugin do
   end
 
   @doc false
+  @spec processed_asset(asset :: Asset.t()) :: Result.t(Asset.t())
+  def processed_asset(asset) do
+    call_function(:processed_asset, [asset])
+  end
+
+  @doc false
   @spec processed_template(template :: Template.t()) :: Result.t(Template.t())
   def processed_template(template) do
     call_function(:processed_template, [template])
@@ -538,6 +572,12 @@ defmodule Serum.Plugin do
   @spec processed_posts(posts :: [Post.t()]) :: Result.t([Post.t()])
   def processed_posts(posts) do
     call_function(:processed_posts, [posts])
+  end
+
+  @doc false
+  @spec processed_assets(assets :: [Asset.t()]) :: Result.t([Asset.t()])
+  def processed_assets(assets) do
+    call_function(:processed_assets, [assets])
   end
 
   @doc false

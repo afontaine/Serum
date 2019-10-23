@@ -16,6 +16,7 @@ defmodule Serum.Build.FileProcessor do
           pages: [Page.t()],
           posts: [Post.t()],
           lists: [PostList.t()],
+          assets: [Asset.t()],
           templates: map(),
           includes: map()
         }
@@ -38,22 +39,25 @@ defmodule Serum.Build.FileProcessor do
   """
   @spec process_files(FileLoader.result(), Project.t()) :: Result.t(result())
   def process_files(files, proj) do
-    import Serum.Build.FileProcessor.{Page, Post, PostList, Template}
+    import Serum.Build.FileProcessor.{Asset, Page, Post, PostList, Template}
 
-    %{pages: page_files, posts: post_files} = files
+    %{assets: asset_files, pages: page_files, posts: post_files} = files
 
     with {:ok, {templates, includes}} <- compile_templates(files),
          {:ok, {pages, compact_pages}} <- preprocess_pages(page_files, proj),
+         {:ok, {assets, compact_assets}} <- preprocess_assets(asset_files, proj),
          {:ok, {posts, compact_posts}} <- process_posts(post_files, proj),
          {:ok, {lists, tag_counts}} <- generate_lists(compact_posts, proj),
-         update_global_bindings(compact_pages, compact_posts, tag_counts),
-         {:ok, pages} <- process_pages(pages, includes, proj) do
+         update_global_bindings(compact_pages, compact_posts, tag_counts, compact_assets),
+         {:ok, pages} <- process_pages(pages, includes, proj),
+         {:ok, assets} <- process_assets(assets) do
       result = %{
         pages: pages,
         posts: posts,
         lists: lists,
         templates: templates,
-        includes: includes
+        includes: includes,
+        assets: assets
       }
 
       {:ok, result}
@@ -62,10 +66,11 @@ defmodule Serum.Build.FileProcessor do
     end
   end
 
-  @spec update_global_bindings([map()], [map()], [{Tag.t(), integer()}]) :: :ok
-  def update_global_bindings(compact_pages, compact_posts, tag_counts) do
+  @spec update_global_bindings([map()], [map()], [{Tag.t(), integer()}], [map()]) :: :ok
+  def update_global_bindings(compact_pages, compact_posts, tag_counts, compact_assets) do
     GlobalBindings.put(:all_pages, compact_pages)
     GlobalBindings.put(:all_posts, compact_posts)
     GlobalBindings.put(:all_tags, tag_counts)
+    GlobalBindings.put(:all_assets, compact_assets)
   end
 end
