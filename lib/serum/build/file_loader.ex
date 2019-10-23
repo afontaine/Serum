@@ -3,10 +3,11 @@ defmodule Serum.Build.FileLoader do
 
   _moduledocp = "A module responsible for loading project files."
 
-  alias Serum.Build.FileLoader.{Includes, Pages, Posts, Templates}
+  alias Serum.Build.FileLoader.{Assets, Includes, Pages, Posts, Templates}
   alias Serum.Result
 
   @type result :: %{
+          assets: [Serum.File.t()],
           templates: [Serum.File.t()],
           includes: [Serum.File.t()],
           pages: [Serum.File.t()],
@@ -32,9 +33,11 @@ defmodule Serum.Build.FileLoader do
     with {:ok, template_files} <- Templates.load(src),
          {:ok, include_files} <- Includes.load(src),
          {:ok, page_files} <- Pages.load(src),
-         {:ok, post_files} <- Posts.load(src) do
+         {:ok, post_files} <- Posts.load(src),
+         {:ok, asset_files} <- Assets.load(src) do
       {:ok,
        %{
+         assets: asset_files,
          templates: template_files,
          includes: include_files,
          pages: page_files,

@@ -39,7 +39,8 @@ defmodule Serum.Build.FileProcessorTest do
       pages: good_page_files,
       posts: good_post_files,
       includes: good_include_files,
-      templates: good_template_files
+      templates: good_template_files,
+      assets: []
     }
 
     bad_page_files =
@@ -64,7 +65,8 @@ defmodule Serum.Build.FileProcessorTest do
       pages: bad_page_files,
       posts: bad_post_files,
       includes: [],
-      templates: bad_template_files
+      templates: bad_template_files,
+      assets: []
     }
 
     {:ok, [good: good, bad: bad, proj: proj]}
